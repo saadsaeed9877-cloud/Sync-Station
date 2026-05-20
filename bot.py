@@ -41,6 +41,23 @@ from openpyxl.utils import get_column_letter
 import io                               # Send file in memory (no temp file needed)
 import calendar                         # Check weekday/weekend
 
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class PingHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Sync Station is running!")
+    def log_message(self, *args):
+        pass  # Silence HTTP logs
+
+def run_webserver():
+    server = HTTPServer(("0.0.0.0", 8080), PingHandler)
+    server.serve_forever()
+
+# Start the web server in a background thread
+threading.Thread(target=run_webserver, daemon=True).start()
 # ============================================================
 # LOAD TOKEN FROM .env FILE
 # ============================================================
