@@ -134,13 +134,12 @@ def save_data(data):
 # ============================================================
 
 def now_str():
-    """Return current time as HH:MM:SS string."""
-    return datetime.now().strftime("%H:%M:%S")
-
+    """Return current full datetime as ISO string."""
+    return datetime.now().isoformat(timespec="seconds")
 
 def today_str():
     """Return today's date as YYYY-MM-DD string."""
-    return date.today().isoformat()
+    return datetime.now().date().isoformat()
 
 
 def seconds_to_hms(seconds):
@@ -161,29 +160,24 @@ def daily_quota_seconds(date_str):
 
 
 def calc_active_seconds(session):
-    """Calculate total active (non-break) seconds for a session.
-    Works even if the user hasn't clocked out yet (uses current time)."""
-    fmt = "%H:%M:%S"
-
-    clock_in = datetime.strptime(session["clock_in"], fmt)
+    """Calculate total active (non-break) seconds for a session."""
+    clock_in = datetime.fromisoformat(session["clock_in"])
     clock_out_str = session.get("clock_out")
     clock_out = (
-        datetime.strptime(clock_out_str, fmt)
+        datetime.fromisoformat(clock_out_str)
         if clock_out_str
         else datetime.now().replace(microsecond=0)
     )
 
     total = (clock_out - clock_in).total_seconds()
 
-    # Subtract all completed break durations
     for b in session.get("breaks", []):
         if b.get("end"):
-            b_start = datetime.strptime(b["start"], fmt)
-            b_end = datetime.strptime(b["end"], fmt)
+            b_start = datetime.fromisoformat(b["start"])
+            b_end = datetime.fromisoformat(b["end"])
             total -= (b_end - b_start).total_seconds()
 
-    return max(0, total)        # Never return negative seconds
-
+    return max(0, total)
 
 # ============================================================
 # GET OR CREATE MEMBER RECORD
